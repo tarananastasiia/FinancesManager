@@ -99,7 +99,7 @@ public static class AuthEndpoints
 
     private static async Task<IResult> Me(
         UserManager<ApplicationUser> userManager,
-        ClaimsPrincipal user)
+        ClaimsPrincipal user)    
     {
         var appUser = await userManager.GetUserAsync(user);
 
