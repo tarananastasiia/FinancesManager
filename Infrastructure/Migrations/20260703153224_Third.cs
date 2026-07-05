@@ -5,14 +5,14 @@
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFieldsToApplicationUser : Migration
+    public partial class Third : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "FullName",
-                table: "AspNetUsers",
+                name: "StripeCustomerId",
+                table: "Users",
                 type: "nvarchar(max)",
                 nullable: true);
         }
@@ -21,8 +21,8 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "FullName",
-                table: "AspNetUsers");
+                name: "StripeCustomerId",
+                table: "Users");
         }
     }
 }

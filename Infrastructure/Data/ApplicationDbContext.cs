@@ -1,14 +1,19 @@
-﻿using Domain.Entities;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Application.Interfaces;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data
 {
-    public sealed class ApplicationDbContext
-        : IdentityDbContext<ApplicationUser, IdentityRole, string>
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options) { }
+            : base(options)
+        {
+        }
+
+        public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+            => base.SaveChangesAsync(cancellationToken);
     }
 }

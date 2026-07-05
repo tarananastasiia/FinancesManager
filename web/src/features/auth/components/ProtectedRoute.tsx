@@ -1,14 +1,16 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
+import { selectIsAuthenticated } from "../authSlice";
+import { useAppSelector } from "../../../store";
 
 interface Props {
   children: JSX.Element;
 }
 
 const ProtectedRoute: React.FC<Props> = ({ children }) => {
-  const token = localStorage.getItem("token");
+  const isAuth = useAppSelector(selectIsAuthenticated);
 
-  if (!token) {
+  if (!isAuth) {
     return <Navigate to="/login" replace />;
   }
 

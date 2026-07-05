@@ -52,10 +52,9 @@ const ProfilePage: React.FC = () => {
 
   // SignalR connection
   useEffect(() => {
-
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("https://localhost:7014/chatHub", {
-        withCredentials: true
+        accessTokenFactory: () => localStorage.getItem("token") ?? ""
       })
       .withAutomaticReconnect()
       .build();
@@ -107,9 +106,9 @@ const ProfilePage: React.FC = () => {
 
     try {
 
+      const userId = localStorage.getItem("userId");
       await connectionRef.current.invoke(
         "SendMessage",
-        "You",
         input
       );
 
@@ -129,123 +128,123 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-      <Container maxWidth={false}>
-        <Paper sx={{ p: 4, borderRadius: 3, background: "linear-gradient(135deg,#F7F4F9,#EDE7F2)" }}>
-          <Typography variant="h4"
-            sx={{
-              fontFamily: "Playfair Display, serif",
-              color: "#4B3553",
-              mb: 2,
-              textAlign: "center"
-            }}
-          >
-            Your Profile
-          </Typography>
-          <Typography sx={{ mb: 1 }}>
-            <strong>Name:</strong> {profile?.fullName}
-          </Typography>
-          <Typography sx={{ mb: 2 }}>
-            <strong>Email:</strong> {profile?.email}
-          </Typography>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-            💳 Saved Cards
-          </Typography>
-          {cards.length === 0 &&
-            <Typography color="text.secondary">No cards saved</Typography>
-          }
-          <List dense>
-            {cards.map((card, i) => (
-              <ListItem key={i}>
-                <ListItemText
-                  primary={`${card.brand.toUpperCase()} •••• ${card.last4}`}
-                  secondary={`Exp: ${card.expMonth}/${card.expYear}`}
-                />
-              </ListItem>
-            ))}
-          </List>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-            📜 Recent Transactions
-          </Typography>
-          {history.length === 0 &&
-            <Typography color="text.secondary">No transactions yet</Typography>
-          }
-          <List dense>
-            {history.slice(0, 5).map((t) => (
-              <ListItem key={t.id}>
-                <ListItemText
-                  primary={`$${t.amount} — ${t.status}`}
-                  secondary={`${new Date(t.date).toLocaleString()} | Card •••• ${t.card}`}
-                />
-              </ListItem>
-            ))}
-          </List>
-          <Divider sx={{ my: 2 }} />
-          <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-            🤖 AI Chat
-          </Typography>
-          <Paper
-            sx={{
-              p: 2,
-              height: 300,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 1
-            }}
-          >
-            {aiMessages.map((m, i) => (
+    <Container maxWidth={false}>
+      <Paper sx={{ p: 4, borderRadius: 3, background: "linear-gradient(135deg,#F7F4F9,#EDE7F2)" }}>
+        <Typography variant="h4"
+          sx={{
+            fontFamily: "Playfair Display, serif",
+            color: "#4B3553",
+            mb: 2,
+            textAlign: "center"
+          }}
+        >
+          Your Profile
+        </Typography>
+        <Typography sx={{ mb: 1 }}>
+          <strong>Name:</strong> {profile?.fullName}
+        </Typography>
+        <Typography sx={{ mb: 2 }}>
+          <strong>Email:</strong> {profile?.email}
+        </Typography>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
+          💳 Saved Cards
+        </Typography>
+        {cards.length === 0 &&
+          <Typography color="text.secondary">No cards saved</Typography>
+        }
+        <List dense>
+          {cards.map((card, i) => (
+            <ListItem key={i}>
+              <ListItemText
+                primary={`${card.brand.toUpperCase()} •••• ${card.last4}`}
+                secondary={`Exp: ${card.expMonth}/${card.expYear}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
+          📜 Recent Transactions
+        </Typography>
+        {history.length === 0 &&
+          <Typography color="text.secondary">No transactions yet</Typography>
+        }
+        <List dense>
+          {history.slice(0, 5).map((t) => (
+            <ListItem key={t.id}>
+              <ListItemText
+                primary={`$${t.amount} — ${t.status}`}
+                secondary={`${new Date(t.date).toLocaleString()} | Card •••• ${t.card}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
+          🤖 AI Chat
+        </Typography>
+        <Paper
+          sx={{
+            p: 2,
+            height: 300,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1
+          }}
+        >
+          {aiMessages.map((m, i) => (
 
-              <Box
-                key={i}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 2,
-                  background: m.user === "AI Bot"
-                    ? "#D1C4E9"
-                    : "#EDE7F2"
-                }}
-              >
-                <Typography sx={{ fontWeight: 600 }}>
-                  {m.user}
-                </Typography>
-                <Typography>
-                  {m.message}
-                </Typography>
-              </Box>
-            ))}
-            <div ref={messagesEndRef} />
-          </Paper>
-          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-            <TextField
-              label="Message"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              sx={{ flex: 1 }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendAiMessage();
+            <Box
+              key={i}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                background: m.user === "AI Bot"
+                  ? "#D1C4E9"
+                  : "#EDE7F2"
               }}
-            />
-            <Button
-              variant="contained"
-              disabled={!connected}
-              onClick={sendAiMessage}
             >
-              Send
-            </Button>
-          </Box>
-          <Typography
-            sx={{
-              mt: 3,
-              color: "#7A6A86",
-              textAlign: "center"
-            }}
-          >
-            Secure Financial Platform
-          </Typography>
+              <Typography sx={{ fontWeight: 600 }}>
+                {m.user}
+              </Typography>
+              <Typography>
+                {m.message}
+              </Typography>
+            </Box>
+          ))}
+          <div ref={messagesEndRef} />
         </Paper>
-      </Container>
+        <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+          <TextField
+            label="Message"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            sx={{ flex: 1 }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendAiMessage();
+            }}
+          />
+          <Button
+            variant="contained"
+            disabled={!connected}
+            onClick={sendAiMessage}
+          >
+            Send
+          </Button>
+        </Box>
+        <Typography
+          sx={{
+            mt: 3,
+            color: "#7A6A86",
+            textAlign: "center"
+          }}
+        >
+          Secure Financial Platform
+        </Typography>
+      </Paper>
+    </Container>
   );
 };
 

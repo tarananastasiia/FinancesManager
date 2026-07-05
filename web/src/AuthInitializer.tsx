@@ -1,28 +1,32 @@
-// src/AuthInitializer.tsx
-import { useEffect } from 'react';
-import { useAppDispatch } from './store';
-import { getProfileApi } from './api/userApi';
-import { setUserFromToken, logoutUser } from './features/auth/authSlice';
+import { useEffect } from "react";
+import { useAppDispatch } from "./store";
+import { getProfileApi } from "./api/userApi";
+import { setToken, setUser, logout } from "./features/auth/authSlice";
 
 const AuthInitializer: React.FC = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Fetch user profile from backend
+    dispatch(setToken(token));
+
     getProfileApi()
       .then((data) => {
-        dispatch(setUserFromToken({ fullName: data.fullName, email: data.email }));
+        dispatch(
+          setUser({
+            fullName: data.fullName,
+            email: data.email,
+          })
+        );
       })
       .catch(() => {
-        // Invalid token → logout
-        dispatch(logoutUser());
+        dispatch(logout());
       });
   }, [dispatch]);
 
-  return null; // does not render anything
+  return null;
 };
 
 export default AuthInitializer;

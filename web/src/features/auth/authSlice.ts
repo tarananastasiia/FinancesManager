@@ -1,5 +1,10 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { LoginRequest, loginUserApi, registerUserApi, RegisterRequest } from '../../api/userApi';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import {
+  LoginRequest,
+  loginUserApi,
+  registerUserApi,
+  RegisterRequest,
+} from "../../api/userApi";
 
 interface User {
   fullName: string;
@@ -7,80 +12,99 @@ interface User {
 }
 
 interface AuthState {
-  user: User | null;
   token: string | null;
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  error?: string;
+  user: User | null;
+  status: "idle" | "loading" | "failed";
+  error: string | null;
 }
 
 const initialState: AuthState = {
+  token: localStorage.getItem("token"),
   user: null,
-  token: localStorage.getItem('token'),
-  status: 'idle',
+  status: "idle",
+  error: null,
 };
 
-// Async thunks
 export const loginUser = createAsyncThunk(
-  'auth/login',
+  "auth/login",
   async (data: LoginRequest, { rejectWithValue }) => {
     try {
-      return await loginUserApi(data); // { token, email, fullName }
+      return await loginUserApi(data);
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.message || 'Login failed');
+      return rejectWithValue(err.response?.data?.message || "Login failed");
     }
   }
 );
 
 export const registerUser = createAsyncThunk(
-  'auth/register',
+  "auth/register",
   async (data: RegisterRequest, { rejectWithValue }) => {
     try {
       return await registerUserApi(data);
     } catch (err: any) {
-      return rejectWithValue(err.response?.data?.[0]?.description || 'Register failed');
+      return rejectWithValue(err.response?.data?.[0]?.description || "Register failed");
     }
   }
 );
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
-    logoutUser: (state) => {
-      state.user = null;
+    logout: (state) => {
       state.token = null;
-      state.status = 'idle';
-      state.error = undefined;
-      localStorage.removeItem('token');
+      state.user = null;
+      state.error = null;
+      localStorage.removeItem("token");
     },
-    setUserFromToken: (state, action: { payload: User }) => {
+    setToken: (state, action: PayloadAction<string>) => {
+      state.token = action.payload;
+    },
+    setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.pending, (state) => {
-        state.status = 'loading';
-        state.error = undefined;
+        state.status = "loading";
+        state.error = null;
       })
-      .addCase(loginUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload as string;
-      })
-      .addCase(loginUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.user = { fullName: action.payload.fullName, email: action.payload.email };
+      .addCase(loginUser.fulfilled, (state, action: any) => {
+        state.status = "idle";
         state.token = action.payload.token;
-        localStorage.setItem('token', action.payload.token);
+        state.user = {
+          email: action.payload.email,
+          fullName: action.payload.fullName,
+        };
+        localStorage.setItem("token", action.payload.token);
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.user = { fullName: action.payload.fullName, email: action.payload.email };
-        state.token = action.payload.token;
-        localStorage.setItem('token', action.payload.token);
+      .addCase(loginUser.rejected, (state, action: any) => {
+        state.status = "failed";
+        state.error = (action.payload as string) || "Login failed";
+      })
+      .addCase(registerUser.rejected, (state, action: any) => {
+        state.status = "failed";
+        state.error = (action.payload as string) || "Register failed";
       });
   },
 });
 
-export const { logoutUser, setUserFromToken } = authSlice.actions;
+export const hydrateAuth = () => (dispatch: any) => {
+  const token = localStorage.getItem("token");
+  if (token) dispatch(setToken(token));
+};
+
+export const { logout, setToken, setUser } = authSlice.actions;
 export default authSlice.reducer;
+
+export const selectToken = (state: any) => state.auth.token;
+
+export const selectIsAuthenticated = (state: any) =>
+  Boolean(state.auth.token);
+
+export const selectUser = (state: any) => state.auth.user;
+
+export const selectAuthStatus = (state: any) => state.auth.status;
+
+export const selectAuthError = (state: any) => state.auth.error;
