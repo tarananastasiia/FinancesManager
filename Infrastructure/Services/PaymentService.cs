@@ -1,8 +1,4 @@
 ﻿using Application.DTOs.ResponseModel.Payment;
-using Stripe;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Services
 {
@@ -14,17 +10,18 @@ namespace Infrastructure.Services
 
     public class PaymentService : IPaymentService
     {
+        private readonly IStripeClient _stripe;
+
+        public PaymentService(IStripeClient stripe)
+        {
+            _stripe = stripe;
+        }
+
         public async Task<List<CardResponse>> GetCards(string customerId)
         {
-            var service = new PaymentMethodService();
+            var methods = await _stripe.GetCardMethods(customerId);
 
-            var methods = await service.ListAsync(new PaymentMethodListOptions
-            {
-                Customer = customerId,
-                Type = "card"
-            });
-
-            return methods.Data.Select(pm => new CardResponse
+            return methods.Select(pm => new CardResponse
             {
                 Brand = pm.Card.Brand,
                 Last4 = pm.Card.Last4,
@@ -35,15 +32,9 @@ namespace Infrastructure.Services
 
         public async Task<List<PaymentHistoryResponse>> GetHistory(string customerId)
         {
-            var service = new PaymentIntentService();
+            var payments = await _stripe.GetPaymentHistory(customerId, 20);
 
-            var payments = await service.ListAsync(new PaymentIntentListOptions
-            {
-                Customer = customerId,
-                Limit = 20
-            });
-
-            return payments.Data.Select(p => new PaymentHistoryResponse
+            return payments.Select(p => new PaymentHistoryResponse
             {
                 Id = p.Id,
                 Amount = p.Amount / 100.0,
