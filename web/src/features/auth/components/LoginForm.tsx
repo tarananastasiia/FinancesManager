@@ -18,7 +18,7 @@ interface LoginFormProps {
     rememberMe: boolean;
   }) => void;
   loading?: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 const LoginForm: React.FC<LoginFormProps> = ({

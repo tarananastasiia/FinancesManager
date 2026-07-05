@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
-
-namespace Domain.Entities
+﻿namespace Domain.Entities
 {
-    public sealed class ApplicationUser : IdentityUser
+    public class ApplicationUser
     {
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
         public string FullName { get; set; }
+
+        public string StripeCustomerId { get; set; }
     }
 }

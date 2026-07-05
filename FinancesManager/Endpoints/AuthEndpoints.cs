@@ -1,8 +1,8 @@
+using Application.Auth.Commands.Login;
+using Application.Auth.Commands.Register;
+using Application.Auth.Queries;
 using Application.DTOs.RequestModel;
-using Application.Services;
-using Domain.Entities;
-using Infrastructure.Data;
-using Microsoft.AspNetCore.Identity;
+using MediatR;
 using System.Security.Claims;
 
 namespace FinancesManager.Endpoints;
@@ -13,104 +13,22 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth");
 
-        group.MapPost("/register", Register);
-        group.MapPost("/login", Login);
-        group.MapGet("/me", Me).RequireAuthorization();
+        group.MapPost("/register", async (RegisterModel model, IMediator mediator) =>
+            await mediator.Send(new RegisterCommand(model)));
+
+        group.MapPost("/login", async (LoginModel model, IMediator mediator) =>
+            await mediator.Send(new LoginCommand(model)));
+
+        group.MapGet("/me", async (
+            ClaimsPrincipal user,
+            IMediator mediator) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            return await mediator.Send(new GetCurrentUserQuery(userId!));
+        })
+        .RequireAuthorization();
 
         return group;
-    }
-
-    private static async Task<IResult> Register(
-        RegisterModel model,
-        UserManager<ApplicationUser> userManager,
-        ApplicationDbContext db,
-        JwtService jwtService)
-    {
-        using var transaction = await db.Database.BeginTransactionAsync();
-
-        try
-        {
-            if (await userManager.FindByEmailAsync(model.Email) != null)
-            {
-                return Results.BadRequest(new { message = "Email already registered" });
-            }
-
-            var user = new ApplicationUser
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FullName = model.FullName
-            };
-
-            var result = await userManager.CreateAsync(user, model.Password);
-
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToList();
-                return Results.BadRequest(new { message = "Registration failed", errors });
-            }
-
-            var token = jwtService.GenerateToken(user);
-
-            await transaction.CommitAsync();
-
-            return Results.Ok(new
-            {
-                token,
-                user.Email,
-                user.FullName
-            });
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync();
-            return Results.Problem("Registration failed: " + ex.Message);
-        }
-    }
-
-    private static async Task<IResult> Login(
-        LoginModel model,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        JwtService jwtService)
-    {
-        var user = await userManager.FindByEmailAsync(model.Email);
-
-        if (user == null)
-            return Results.Unauthorized();
-
-        var result = await signInManager.CheckPasswordSignInAsync(
-            user,
-            model.Password,
-            true);
-
-        if (!result.Succeeded)
-            return Results.Unauthorized();
-
-        var token = jwtService.GenerateToken(user);
-
-        return Results.Ok(new
-        {
-            token,
-            user.Email,
-            user.FullName
-        });
-    }
-
-    private static async Task<IResult> Me(
-        UserManager<ApplicationUser> userManager,
-        ClaimsPrincipal user)    
-    {
-        var appUser = await userManager.GetUserAsync(user);
-
-        if (appUser is null)
-            return Results.Unauthorized();
-
-        return Results.Ok(new
-        {
-            appUser.Id,
-            appUser.Email,
-            appUser.FullName
-        });
     }
 }

@@ -1,22 +1,20 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { RootState } from "./store";
-import { logoutUser } from "./features/auth/authSlice";
+import { RootState, useAppDispatch } from "./store";
+import { logout } from "./features/auth/authSlice";
 
 const Header: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    dispatch(logoutUser());
+    dispatch(logout());
     navigate("/login");
   };
 
-console.log(user);
   return (
     <AppBar
       position="static"
