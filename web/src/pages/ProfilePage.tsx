@@ -26,7 +26,6 @@ const ProfilePage: React.FC = () => {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Load profile data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -50,7 +49,6 @@ const ProfilePage: React.FC = () => {
     loadData();
   }, []);
 
-  // SignalR connection
   useEffect(() => {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("https://localhost:7014/chatHub", {
@@ -88,7 +86,6 @@ const ProfilePage: React.FC = () => {
 
   }, []);
 
-  // Auto scroll chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [aiMessages]);
@@ -106,7 +103,6 @@ const ProfilePage: React.FC = () => {
 
     try {
 
-      const userId = localStorage.getItem("userId");
       await connectionRef.current.invoke(
         "SendMessage",
         input

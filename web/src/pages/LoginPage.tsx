@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAppDispatch, useAppSelector } from '../store';
 import { loginUser } from '../features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';

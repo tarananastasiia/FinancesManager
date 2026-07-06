@@ -12,6 +12,7 @@ namespace Infrastructure.Data
         }
 
         public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
+        public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
             => base.SaveChangesAsync(cancellationToken);

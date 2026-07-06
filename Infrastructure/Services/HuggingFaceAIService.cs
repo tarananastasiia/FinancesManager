@@ -1,7 +1,7 @@
-﻿using Application.Interfaces;
+﻿using Application.Exceptions;
+using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Stripe;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -42,7 +42,7 @@ public class HuggingFaceAIService : IAIService
             .FirstOrDefaultAsync(x => x.Id == userId);
 
         if (user == null)
-            return "User not found";
+            throw new NotFoundException("User not found");
 
         var customerId = user.StripeCustomerId.ToString();
 

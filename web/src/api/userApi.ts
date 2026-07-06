@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "./apiClient";
 
 export interface LoginRequest {
   email: string;
@@ -14,40 +14,26 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   email: string;
   fullName: string;
 }
 
-axios.defaults.headers.common["Authorization"] =
-  `Bearer ${localStorage.getItem("token")}`;
-  
-const API_URL = process.env.REACT_APP_API_URL;
-
 export const loginUserApi = async (
   data: LoginRequest
 ): Promise<AuthResponse> => {
-
-  const res = await axios.post(
-    `${API_URL}/api/auth/login`,
-    data
-  );
-
+  const res = await apiClient.post("/api/auth/login", data);
   return res.data;
 };
 
 export const registerUserApi = async (
   data: RegisterRequest
 ): Promise<AuthResponse> => {
-
-  const res = await axios.post(
-    `${API_URL}/api/auth/register`,
-    data
-  );
-
+  const res = await apiClient.post("/api/auth/register", data);
   return res.data;
 };
 
 export const getProfileApi = async () => {
-  const res = await axios.get(`${API_URL}/api/auth/me`);
+  const res = await apiClient.get("/api/auth/me");
   return res.data;
 };

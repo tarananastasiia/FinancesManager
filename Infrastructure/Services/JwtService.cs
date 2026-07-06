@@ -43,5 +43,11 @@ namespace Infrastructure.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                + Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        }
     }
 }

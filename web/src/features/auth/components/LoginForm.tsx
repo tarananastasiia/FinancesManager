@@ -56,7 +56,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             boxShadow: "0 18px 45px rgba(90,70,110,0.18)",
           }}
         >
-          {/* Title */}
+
           <Typography
             variant="h4"
             align="center"
@@ -70,7 +70,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
             Member Login
           </Typography>
 
-          {/* Subtitle */}
           <Typography
             align="center"
             sx={{
@@ -83,14 +82,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
             Secure Financial Platform
           </Typography>
 
-          {/* Error */}
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
 
-          {/* Form */}
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth

@@ -78,6 +78,7 @@ const authSlice = createSlice({
           fullName: action.payload.fullName,
         };
         localStorage.setItem("token", action.payload.token);
+        localStorage.setItem("refreshToken", action.payload.refreshToken);
       })
       .addCase(loginUser.rejected, (state, action: any) => {
         state.status = "failed";

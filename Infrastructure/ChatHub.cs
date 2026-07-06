@@ -17,7 +17,7 @@ public class ChatHub : Hub
 
     public async Task SendMessage(string message)
     {
-        var userId = Context.User?.FindFirst("sub")?.Value;
+        var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId))
             return;

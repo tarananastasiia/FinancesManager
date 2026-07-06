@@ -1,8 +1,12 @@
+using Application.Behaviors;
 using Application.Interfaces;
 using FinancesManager.Endpoints;
+using FluentValidation;
 using Infrastructure;
 using Infrastructure.Data;
+using Infrastructure.Middleware;
 using Infrastructure.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -97,11 +101,19 @@ builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<Infrastructure.Services.IStripeClient, Infrastructure.Services.StripeClient>();
 
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Application.AssemblyReference).Assembly);
 });
+
+builder.Services.AddValidatorsFromAssembly(typeof(Application.AssemblyReference).Assembly);
+
+builder.Services.AddTransient(
+    typeof(IPipelineBehavior<,>),
+    typeof(ValidationBehavior<,>)
+);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -109,6 +121,9 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<ExceptionMiddleware>();
+
 app.UseStaticFiles();
 
 app.UseRouting();

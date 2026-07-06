@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { getHistory } from "../api/paymentApi";
+import { getHistoryApi } from "../api/paymentApi";
 
 export default function HistoryPage() {
 
   const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
-    getHistory().then(setData);
+    getHistoryApi().then(setData);
   }, []);
 
   return (

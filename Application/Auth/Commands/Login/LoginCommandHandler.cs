@@ -1,5 +1,7 @@
 ﻿using Application.DTOs.ResponseModel.Auth;
+using Application.Exceptions;
 using Application.Interfaces;
+using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,35 +28,37 @@ public class LoginCommandHandler
     {
         var model = request.Model;
 
+        var days = model.RememberMe ? 30 : 7;
+
         var user = await _db.Users
             .FirstOrDefaultAsync(x => x.Email == model.Email, cancellationToken);
 
         if (user == null)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Invalid credentials"
-            };
-        }
+            throw new UnauthorizedException("Invalid credentials");
 
         var isValid = _passwordService.Verify(user, model.Password);
 
         if (!isValid)
-        {
-            return new LoginResponse
-            {
-                Success = false,
-                Error = "Invalid credentials"
-            };
-        }
+            throw new UnauthorizedException("Invalid credentials");
 
-        var token = _jwtService.GenerateToken(user);
+        var accessToken = _jwtService.GenerateToken(user);
+
+        var refreshToken = new RefreshToken
+        {
+            Token = _jwtService.GenerateRefreshToken(),
+            UserId = user.Id,
+            Created = DateTime.UtcNow,
+            Expires = DateTime.UtcNow.AddDays(days)
+        };
+
+        _db.RefreshTokens.Add(refreshToken);
+        await _db.SaveChangesAsync(cancellationToken);
 
         return new LoginResponse
         {
             Success = true,
-            Token = token,
+            Token = accessToken,
+            RefreshToken = refreshToken.Token,
             Email = user.Email,
             FullName = user.FullName
         };

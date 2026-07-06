@@ -50,7 +50,6 @@ public class RegisterCommandHandler
 
         user.PasswordHash = _passwordService.Hash(user, model.Password);
 
-        // 🚀 CREATE STRIPE CUSTOMER HERE
         var customerService = new CustomerService();
 
         var stripeCustomer = await customerService.CreateAsync(new CustomerCreateOptions
@@ -59,7 +58,6 @@ public class RegisterCommandHandler
             Name = user.FullName
         }, cancellationToken: cancellationToken);
 
-        // 💾 SAVE STRIPE ID
         user.StripeCustomerId = stripeCustomer.Id;
 
         _db.Users.Add(user);

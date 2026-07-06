@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.ResponseModel.Auth;
+using Application.Exceptions;
 using Application.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,7 @@ public class GetCurrentUserQueryHandler
             .FirstOrDefaultAsync(x => x.Id.ToString() == request.UserId, cancellationToken);
 
         if (user == null)
-            throw new Exception("User not found");
+            throw new NotFoundException("User not found");
 
         return new GetCurrentUserResponse
         {

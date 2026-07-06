@@ -11,5 +11,7 @@
         public string FullName { get; set; }
 
         public string Error { get; set; }
+
+        public string RefreshToken { get; set; }
     }
 }
