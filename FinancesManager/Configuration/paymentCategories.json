@@ -1,0 +1,42 @@
+{
+  "Rules": [
+    {
+      "Category": "Transport",
+      "Keywords": [
+        "uber",
+        "bolt",
+        "lyft"
+      ]
+    },
+    {
+      "Category": "Entertainment",
+      "Keywords": [
+        "spotify",
+        "netflix",
+        "youtube"
+      ]
+    },
+    {
+      "Category": "Shopping",
+      "Keywords": [
+        "amazon",
+        "aliexpress"
+      ]
+    },
+    {
+      "Category": "Fuel",
+      "Keywords": [
+        "shell",
+        "bp"
+      ]
+    },
+    {
+      "Category": "Food",
+      "Keywords": [
+        "starbucks",
+        "mcdonald",
+        "kfc"
+      ]
+    }
+  ]
+}

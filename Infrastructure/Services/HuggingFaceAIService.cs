@@ -1,8 +1,9 @@
-﻿using Application.Exceptions;
+﻿using Application.DTOs.AI;
+using Application.Exceptions;
 using Application.Interfaces;
 using Application.Models;
+using Infrastructure.Builders;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
@@ -13,20 +14,17 @@ namespace Infrastructure.Services;
 public class HuggingFaceAIService : IAIService
 {
     private readonly IHttpClientFactory _factory;
-    private readonly IConfiguration _config;
     private readonly IApplicationDbContext _db;
     private readonly IPaymentService _paymentService;
     private readonly HuggingFaceSettings _settings;
 
     public HuggingFaceAIService(
         IHttpClientFactory factory,
-        IConfiguration config,
         IApplicationDbContext db,
         IPaymentService paymentService,
         IOptions<HuggingFaceSettings> options)
     {
         _factory = factory;
-        _config = config;
         _db = db;
         _paymentService = paymentService;
         _settings = options.Value;
@@ -43,11 +41,11 @@ public class HuggingFaceAIService : IAIService
         if (user == null)
             throw new NotFoundException("User not found");
 
-        var customerId = user.StripeCustomerId.ToString();
+        var customerId = user.StripeCustomerId;
 
-        var cards = await _paymentService.GetCards(customerId);
+        var cards = await _paymentService.GetCardsAsync(customerId);
 
-        var history =  await _paymentService.GetHistory(customerId);
+        var history =  await _paymentService.GetHistoryAsync(customerId);
 
         var cardsText = string.Join(", ", cards.Select(c =>
                 $"{c.Brand} ****{c.Last4} exp {c.ExpMonth}/{c.ExpYear}"
@@ -63,28 +61,12 @@ public class HuggingFaceAIService : IAIService
             Cards: {cardsText}
             Transactions: {historyText}";
 
-        var systemPrompt = 
-            "You are a financial AI assistant inside FinancesManager. Help users understand transactions, cards, and spending.";
-
-        var appContext =
-            "Rules: Only financial answers. Be concise. If unknown data, say you don't know.";
-
         var client = _factory.CreateClient();
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
-        var body = new
-        {
-            model = "meta-llama/Llama-3.1-8B-Instruct",
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "system", content = appContext },
-                new { role = "system", content = userContext },
-                new { role = "user", content = message }
-            }
-        };
+        var body = PromptBuilder.Build(userContext, message);
 
         var response = await client.PostAsync("https://router.huggingface.co/v1/chat/completions",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
@@ -92,17 +74,22 @@ public class HuggingFaceAIService : IAIService
 
         var json = await response.Content.ReadAsStringAsync();
 
-        using var doc = JsonDocument.Parse(json);
+        var result = JsonSerializer.Deserialize<AiResponseDto>(
+            json,
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
-        if (!doc.RootElement.TryGetProperty("choices", out var choices) ||
-            choices.GetArrayLength() == 0)
+        if (result == null || result.Choices.Count == 0)
         {
             return "No AI response";
         }
 
-        return choices[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString() ?? "Empty response";
+        var responseMessage = result.Choices[0]
+            .Message
+            .Content ?? "Empty response";
+
+        return responseMessage;
     }
 }

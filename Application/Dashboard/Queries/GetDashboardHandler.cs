@@ -1,4 +1,5 @@
 ﻿using Application.Common;
+using Application.DTOs;
 using Application.DTOs.ResponseModel.Dashboard;
 using Application.Interfaces;
 using MediatR;
@@ -10,10 +11,12 @@ namespace Application.Dashboard.Queries
     public class GetDashboardHandler : IRequestHandler<GetDashboardQuery, DashboardResponse>
     {
         private readonly IApplicationDbContext _db;
+        private readonly PaymentCategoryResolver _categoryResolver;
 
-        public GetDashboardHandler(IApplicationDbContext db)
+        public GetDashboardHandler(IApplicationDbContext db, PaymentCategoryResolver categoryResolver)
         {
             _db = db;
+            _categoryResolver = categoryResolver;
         }
 
         public async Task<DashboardResponse> Handle(GetDashboardQuery request, CancellationToken cancellationToken)
@@ -37,7 +40,7 @@ namespace Application.Dashboard.Queries
                     x.Created.Year == DateTime.UtcNow.Year)
                 .Sum(x => x.Amount) / 100m;
 
-            var monthly = charges.Data
+            var monthlySpending = charges.Data
                 .GroupBy(x => new
                 {
                     x.Created.Year,
@@ -48,10 +51,11 @@ namespace Application.Dashboard.Queries
                     Month = $"{x.Key.Month}/{x.Key.Year}",
                     Amount = x.Sum(c => c.Amount) / 100m
                 })
+                .OrderBy(x => x.Month)
                 .ToList();
 
             var categories = charges.Data
-                .GroupBy(x => PaymentCategoryHelper.GetCategory(x.Description))
+                .GroupBy(x => _categoryResolver.GetCategory(x.Description))
                 .Select(x => new CategorySpendingDto
                 {
                     Category = x.Key.ToString(),
@@ -68,7 +72,7 @@ namespace Application.Dashboard.Queries
                     .Select(x => x.PaymentMethod)
                     .Distinct()
                     .Count(),
-                MonthlySpending = monthly,
+                MonthlySpending = monthlySpending,
                 CategorySpending = categories
             };
         }

@@ -1,53 +1,72 @@
 ﻿using Application.Interfaces;
+using Application.Models;
 using Domain.Entities;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
-namespace Infrastructure.Services
+namespace Infrastructure.Services;
+
+public class JwtService : IJwtService
 {
-    public class JwtService : IJwtService
+    private readonly JwtSettings _settings;
+
+    public JwtService(IOptions<JwtSettings> settings)
     {
-        private readonly IConfiguration _config;
+        _settings = settings.Value;
+    }
 
-        public JwtService(IConfiguration config)
+    public string GenerateToken(ApplicationUser user)
+    {
+        var claims = new[]
         {
-            _config = config;
-        }
+            new Claim(
+                JwtRegisteredClaimNames.Sub,
+                user.Id.ToString()
+            ),
+            new Claim(
+                JwtRegisteredClaimNames.Email,
+                user.Email ?? string.Empty
+            ),
+            new Claim(
+                "fullName",
+                user.FullName ?? string.Empty
+            )
+        };
 
-        public string GenerateToken(ApplicationUser user)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-                new Claim("fullName", user.FullName ?? string.Empty),
-                new Claim(ClaimTypes.Role, "Admin")
-            };
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(_settings.Key)
+        );
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)
-            );
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        );
 
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var token = new JwtSecurityToken(
+            issuer: _settings.Issuer,
+            audience: _settings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(60),
+            signingCredentials: credentials
+        );
 
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(60),
-                signingCredentials: creds
-            );
+        var result = new JwtSecurityTokenHandler().WriteToken(token);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        return result;
+    }
 
-        public string GenerateRefreshToken()
-        {
-            return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-                + Convert.ToBase64String(Guid.NewGuid().ToByteArray());
-        }
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+
+        using var rng = RandomNumberGenerator.Create();
+
+        rng.GetBytes(randomBytes);
+
+        return Convert.ToBase64String(randomBytes);
     }
 }

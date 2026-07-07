@@ -10,11 +10,13 @@ namespace Application.Payments.Queries.GetPaymentHistory
     {
         private readonly IApplicationDbContext _db;
         private readonly IStripeService _stripeService;
+        private readonly PaymentCategoryResolver _categoryResolver;
 
-        public GetPaymentHistoryQueryHandler(IApplicationDbContext db, IStripeService stripeService)
+        public GetPaymentHistoryQueryHandler(IApplicationDbContext db, IStripeService stripeService, PaymentCategoryResolver categoryResolver)
         {
             _db = db;
             _stripeService = stripeService;
+            _categoryResolver = categoryResolver;
         }
 
         public async Task<List<PaymentHistoryResponse>> Handle(
@@ -26,7 +28,7 @@ namespace Application.Payments.Queries.GetPaymentHistory
 
             var charges = await _stripeService.GetChargesAsync(user.StripeCustomerId, 20, cancellationToken);
 
-            return charges.Select(c => new PaymentHistoryResponse
+            var result = charges.Select(c => new PaymentHistoryResponse
             {
                 Id = c.Id,
                 Amount = c.Amount / 100.0,
@@ -35,8 +37,10 @@ namespace Application.Payments.Queries.GetPaymentHistory
                 Date = c.Created.ToUniversalTime(),
                 Card = c.PaymentMethodDetails?.Card?.Last4,
                 Description = c.Description,
-                Category = PaymentCategoryHelper.GetCategory(c.Description).ToString()
+                Category = _categoryResolver.GetCategory(c.Description).ToString()
             }).ToList();
+
+            return result;
         }
     }
 }

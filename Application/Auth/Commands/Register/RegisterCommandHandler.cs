@@ -7,8 +7,7 @@ using Stripe;
 
 namespace Application.Auth.Commands.Register;
 
-public class RegisterCommandHandler
-    : IRequestHandler<RegisterCommand, RegisterResponse>
+public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
 {
     private readonly IApplicationDbContext _db;
     private readonly IJwtService _jwtService;

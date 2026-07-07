@@ -31,7 +31,7 @@ namespace Tests.Payment
 
             var service = new PaymentService(stripeMock.Object);
 
-            var result = await service.GetCards("cus_123");
+            var result = await service.GetCardsAsync("cus_123");
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("visa", result[0].Brand);
@@ -61,7 +61,7 @@ namespace Tests.Payment
 
             var service = new PaymentService(stripeMock.Object);
 
-            var result = await service.GetHistory("cus_123");
+            var result = await service.GetHistoryAsync("cus_123");
 
             Assert.AreEqual(1, result.Count);
             Assert.AreEqual("pi_1", result[0].Id);

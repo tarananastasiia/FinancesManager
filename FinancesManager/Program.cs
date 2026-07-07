@@ -1,4 +1,6 @@
 using Application.Behaviors;
+using Application.Common;
+using Application.Common.Settings;
 using Application.Interfaces;
 using Application.Models;
 using FinancesManager.Endpoints;
@@ -12,7 +14,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Stripe;
-using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +33,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.Configure<HuggingFaceSettings>(
     builder.Configuration.GetSection("HuggingFace"));
+
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("Jwt"));
+
+builder.Configuration.AddJsonFile(
+    "Configuration/paymentCategories.json",
+    optional: false,
+    reloadOnChange: true);
+
+builder.Services.Configure<PaymentCategoryResolverSettings>(
+    builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -65,28 +78,17 @@ builder.Services.AddAuthentication(options =>
 
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
-        ),
 
-        NameClaimType = ClaimTypes.NameIdentifier,
-        RoleClaimType = ClaimTypes.Role
+        IssuerSigningKey = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(
+            builder.Configuration["Jwt:Key"]!)
+    ),
+
+        NameClaimType = JwtRegisteredClaimNames.Sub
     };
 });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdmin", policy =>
-        policy.RequireRole("Admin"));
-
-    options.AddPolicy("PaidUser", policy =>
-        policy.RequireClaim("subscription", "Pro", "Business"));
-
-    options.AddPolicy("FinanceManager", policy =>
-        policy.RequireAssertion(context =>
-            context.User.HasClaim("department", "Finance") &&
-            context.User.HasClaim("is_manager", "true")));
-});
+builder.Services.AddAuthorization();
 
 builder.Services.AddCors(options =>
 {
@@ -107,6 +109,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IStripeService, StripeService>();
+builder.Services.AddScoped<PaymentCategoryResolver>();
 
 builder.Services.AddMediatR(cfg =>
 {

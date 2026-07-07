@@ -11,7 +11,7 @@ namespace Infrastructure.Services
             _chargeService = chargeService;
         }
 
-        public async Task<List<PaymentMethod>> GetCardMethods(string customerId)
+        public async Task<List<PaymentMethod>> GetCardMethodsAsync(string customerId)
         {
             var service = new PaymentMethodService();
 
@@ -24,7 +24,7 @@ namespace Infrastructure.Services
             return result.Data;
         }
 
-        public async Task<List<PaymentIntent>> GetPaymentHistory(string customerId, int limit)
+        public async Task<List<PaymentIntent>> GetPaymentHistoryAsync(string customerId, int limit)
         {
             var service = new PaymentIntentService();
 
@@ -54,9 +54,9 @@ namespace Infrastructure.Services
         {
             var service = new PaymentIntentService();
 
-            return await service.CreateAsync(
-                options,
-                cancellationToken: cancellationToken);
+            var result = await service.CreateAsync(options, cancellationToken: cancellationToken);
+
+            return result;
         }
 
         public async Task<List<Charge>> GetChargesAsync(string customerId, int limit, CancellationToken cancellationToken)

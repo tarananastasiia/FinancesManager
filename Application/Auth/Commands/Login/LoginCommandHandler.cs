@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ResponseModel.Auth;
+﻿using Application.Common.Constants;
+using Application.DTOs.ResponseModel.Auth;
 using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entities;
@@ -28,7 +29,9 @@ public class LoginCommandHandler
     {
         var model = request.Model;
 
-        var days = model.RememberMe ? 30 : 7;
+        var days = model.RememberMe
+            ? AuthConstants.RememberMeRefreshTokenDays
+            : AuthConstants.DefaultRefreshTokenDays;
 
         var user = await _db.Users
             .FirstOrDefaultAsync(x => x.Email == model.Email, cancellationToken);

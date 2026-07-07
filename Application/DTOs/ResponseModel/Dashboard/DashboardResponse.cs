@@ -13,17 +13,4 @@
         public List<MonthlySpendingDto> MonthlySpending { get; set; }
         public List<CategorySpendingDto> CategorySpending { get; set; }
     }
-
-    public class CategorySpendingDto
-    {
-        public string Category { get; set; }
-        public decimal Amount { get; set; }
-    }
-
-    public class MonthlySpendingDto
-    {
-        public string Month { get; set; }
-
-        public decimal Amount { get; set; }
-    }
 }

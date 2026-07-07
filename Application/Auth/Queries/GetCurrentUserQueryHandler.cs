@@ -24,7 +24,7 @@ public class GetCurrentUserQueryHandler
             .FirstOrDefaultAsync(x => x.Id.ToString() == request.UserId, cancellationToken);
 
         if (user == null)
-            throw new NotFoundException("User not found");
+           throw new NotFoundException("User not found");
 
         return new GetCurrentUserResponse
         {

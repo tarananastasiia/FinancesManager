@@ -1,6 +1,6 @@
 ﻿namespace Domain.Enums
 {
-    public enum PaymentCategory
+    public enum PaymentCategoryType
     {
         Other = 0,
         Food = 1,
