@@ -26,7 +26,7 @@ namespace Application.Payments.Queries.GetPaymentHistory
             var user = await _db.Users.FirstAsync(x => x.Id == request.UserId);
             var customerId = user.StripeCustomerId;
 
-            var charges = await _stripeService.GetChargesAsync(user.StripeCustomerId, 20, cancellationToken);
+            var charges = await _stripeService.GetChargesAsync(user.StripeCustomerId, 20);
 
             var result = charges.Select(c => new PaymentHistoryResponse
             {

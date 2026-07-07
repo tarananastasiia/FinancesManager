@@ -24,7 +24,7 @@ namespace Application.Payments.Queries.GetCards
             var user = await _db.Users.FirstAsync(x => x.Id == request.UserId);
             var customerId = user.StripeCustomerId;
 
-            var paymentMethods = await _stripeService.GetPaymentMethodsAsync(user.StripeCustomerId, cancellationToken);
+            var paymentMethods = await _stripeService.GetPaymentMethodsAsync(user.StripeCustomerId);
 
             return paymentMethods.Select(pm => new CardResponse
             {

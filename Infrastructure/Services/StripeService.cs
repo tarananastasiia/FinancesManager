@@ -11,32 +11,6 @@ namespace Infrastructure.Services
             _chargeService = chargeService;
         }
 
-        public async Task<List<PaymentMethod>> GetCardMethodsAsync(string customerId)
-        {
-            var service = new PaymentMethodService();
-
-            var result = await service.ListAsync(new PaymentMethodListOptions
-            {
-                Customer = customerId,
-                Type = "card"
-            });
-
-            return result.Data;
-        }
-
-        public async Task<List<PaymentIntent>> GetPaymentHistoryAsync(string customerId, int limit)
-        {
-            var service = new PaymentIntentService();
-
-            var result = await service.ListAsync(new PaymentIntentListOptions
-            {
-                Customer = customerId,
-                Limit = limit
-            });
-
-            return result.Data;
-        }
-
         public async Task<string> CreateCustomerAsync(string email, string fullName)
         {
             var service = new CustomerService();
@@ -50,29 +24,28 @@ namespace Infrastructure.Services
             return customer.Id;
         }
 
-        public async Task<PaymentIntent> CreatePaymentIntentAsync(PaymentIntentCreateOptions options, CancellationToken cancellationToken)
+        public async Task<PaymentIntent> CreatePaymentIntentAsync(PaymentIntentCreateOptions options)
         {
             var service = new PaymentIntentService();
 
-            var result = await service.CreateAsync(options, cancellationToken: cancellationToken);
+            var result = await service.CreateAsync(options);
 
             return result;
         }
 
-        public async Task<List<Charge>> GetChargesAsync(string customerId, int limit, CancellationToken cancellationToken)
+        public async Task<List<Charge>> GetChargesAsync(string customerId, int limit)
         {
             var charges = await _chargeService.ListAsync(
                 new ChargeListOptions
                 {
                     Customer = customerId,
                     Limit = limit
-                },
-                cancellationToken: cancellationToken);
+                });
 
             return charges.Data;
         }
 
-        public async Task<List<PaymentMethod>> GetPaymentMethodsAsync(string customerId, CancellationToken cancellationToken)
+        public async Task<List<PaymentMethod>> GetPaymentMethodsAsync(string customerId)
         {
             var service = new PaymentMethodService();
 
@@ -81,8 +54,7 @@ namespace Infrastructure.Services
                 {
                     Customer = customerId,
                     Type = "card"
-                },
-                cancellationToken: cancellationToken);
+                });
 
             return methods.Data;
         }

@@ -27,8 +27,7 @@ namespace Application.Payments.Commands.CreatePayment
                 {
                     Enabled = true
                 }
-            },
-            cancellationToken);
+            });
 
             return new CreatePaymentResponse
             {

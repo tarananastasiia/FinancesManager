@@ -14,7 +14,7 @@ namespace Infrastructure.Services
 
         public async Task<List<CardResponse>> GetCardsAsync(string customerId)
         {
-            var methods = await _stripe.GetCardMethodsAsync(customerId);
+            var methods = await _stripe.GetPaymentMethodsAsync(customerId);
 
             var result = methods.Select(pm => new CardResponse
             {
@@ -29,7 +29,7 @@ namespace Infrastructure.Services
 
         public async Task<List<PaymentHistoryResponse>> GetHistoryAsync(string customerId)
         {
-            var payments = await _stripe.GetPaymentHistoryAsync(customerId, 20);
+            var payments = await _stripe.GetChargesAsync(customerId, 20);
 
             var result = payments.Select(p => new PaymentHistoryResponse
             {
