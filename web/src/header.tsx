@@ -62,7 +62,7 @@ const Header: React.FC = () => {
                   letterSpacing: "0.5px",
                 }}
               >
-                Hello, {user.fullName} 👋
+                Hello, {user.fullName}
               </Typography>
 
               <Button

@@ -9,37 +9,30 @@ namespace Application.Payments.Queries.GetCards
     public class GetCardsQueryHandler : IRequestHandler<GetCardsQuery, List<CardResponse>>
     {
         private readonly IApplicationDbContext _db;
+        private readonly IStripeService _stripeService;
 
-        public GetCardsQueryHandler(IApplicationDbContext db)
+        public GetCardsQueryHandler(IApplicationDbContext db, IStripeService stripeService)
         {
             _db = db;
+            _stripeService = stripeService;
         }
 
         public async Task<List<CardResponse>> Handle(
             GetCardsQuery request,
             CancellationToken cancellationToken)
         {
-            var service = new ChargeService();
             var user = await _db.Users.FirstAsync(x => x.Id == request.UserId);
             var customerId = user.StripeCustomerId;
 
-            var charges = await service.ListAsync(
-                new ChargeListOptions
-                {
-                    Limit = 10,
-                    Customer = customerId
-                },
-                cancellationToken: cancellationToken);
+            var paymentMethods = await _stripeService.GetPaymentMethodsAsync(user.StripeCustomerId, cancellationToken);
 
-            return charges.Data
-                .Where(c => c.PaymentMethodDetails?.Card != null)
-                .Select(c => new CardResponse
-                {
-                    Brand = c.PaymentMethodDetails!.Card!.Brand,
-                    Last4 = c.PaymentMethodDetails.Card.Last4,
-                    ExpMonth = c.PaymentMethodDetails.Card.ExpMonth,
-                    ExpYear = c.PaymentMethodDetails.Card.ExpYear
-                }).ToList();
+            return paymentMethods.Select(pm => new CardResponse
+            {
+                Brand = pm.Card.Brand,
+                Last4 = pm.Card.Last4,
+                ExpMonth = pm.Card.ExpMonth,
+                ExpYear = pm.Card.ExpYear
+            }).ToList();
         }
     }
 }

@@ -1,29 +1,34 @@
 ﻿using Application.DTOs.ResponseModel.Payment;
+using Application.Interfaces;
 using MediatR;
 using Stripe;
 
 namespace Application.Payments.Commands.CreatePayment
 {
-    public class CreatePaymentCommandHandler
-        : IRequestHandler<CreatePaymentCommand, CreatePaymentResponse>
+    public class CreatePaymentCommandHandler : IRequestHandler<CreatePaymentCommand, CreatePaymentResponse>
     {
+        private readonly IStripeService _stripeService;
+
+        public CreatePaymentCommandHandler(IStripeService stripeService)
+        {
+            _stripeService = stripeService;
+        }
+
         public async Task<CreatePaymentResponse> Handle(
             CreatePaymentCommand request,
             CancellationToken cancellationToken)
         {
-            var service = new PaymentIntentService();
-
-            var intent = await service.CreateAsync(
-                new PaymentIntentCreateOptions
+            var intent = await _stripeService.CreatePaymentIntentAsync(
+            new PaymentIntentCreateOptions
+            {
+                Amount = 2000,
+                Currency = "usd",
+                AutomaticPaymentMethods = new()
                 {
-                    Amount = 2000,
-                    Currency = "usd",
-                    AutomaticPaymentMethods = new()
-                    {
-                        Enabled = true
-                    }
-                },
-                cancellationToken: cancellationToken);
+                    Enabled = true
+                }
+            },
+            cancellationToken);
 
             return new CreatePaymentResponse
             {

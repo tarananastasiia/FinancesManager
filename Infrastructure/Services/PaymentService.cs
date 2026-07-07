@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.ResponseModel.Payment;
+using Application.Interfaces;
 
 namespace Infrastructure.Services
 {
@@ -10,9 +11,9 @@ namespace Infrastructure.Services
 
     public class PaymentService : IPaymentService
     {
-        private readonly IStripeClient _stripe;
+        private readonly IStripeService _stripe;
 
-        public PaymentService(IStripeClient stripe)
+        public PaymentService(IStripeService stripe)
         {
             _stripe = stripe;
         }
@@ -40,7 +41,8 @@ namespace Infrastructure.Services
                 Amount = p.Amount / 100.0,
                 Currency = p.Currency,
                 Status = p.Status,
-                Date = DateTimeOffset.FromUnixTimeSeconds(p.Created.Second).UtcDateTime
+                Date = DateTimeOffset.FromUnixTimeSeconds(p.Created.Second).UtcDateTime,
+                Description = p.Description
             }).ToList();
         }
     }

@@ -1,17 +1,14 @@
 ﻿using Application.Exceptions;
 using Application.Interfaces;
+using Application.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 
 namespace Infrastructure.Services;
-
-public interface IAIService
-{
-    Task<string> GetResponseAsync(Guid userId, string message);
-}
 
 public class HuggingFaceAIService : IAIService
 {
@@ -19,23 +16,25 @@ public class HuggingFaceAIService : IAIService
     private readonly IConfiguration _config;
     private readonly IApplicationDbContext _db;
     private readonly IPaymentService _paymentService;
+    private readonly HuggingFaceSettings _settings;
 
     public HuggingFaceAIService(
         IHttpClientFactory factory,
         IConfiguration config,
         IApplicationDbContext db,
-        IPaymentService paymentService)
+        IPaymentService paymentService,
+        IOptions<HuggingFaceSettings> options)
     {
         _factory = factory;
         _config = config;
         _db = db;
         _paymentService = paymentService;
+        _settings = options.Value;
     }
 
     public async Task<string> GetResponseAsync(Guid userId, string message)
     {
-        var apiKey = _config["HuggingFace:ApiKey"];
-        if (string.IsNullOrEmpty(apiKey))
+        if (string.IsNullOrEmpty(_settings.ApiKey))
             return "Missing API key";
 
         var user = await _db.Users
@@ -55,7 +54,7 @@ public class HuggingFaceAIService : IAIService
             ));
 
         var historyText = string.Join(", ", history.Select(h =>
-            $"{h.Amount} {h.Currency} {h.Status}"
+            $"{h.Amount} {h.Currency} {h.Status} {h.Description}"
         ));
 
         var userContext = $@"
@@ -64,7 +63,7 @@ public class HuggingFaceAIService : IAIService
             Cards: {cardsText}
             Transactions: {historyText}";
 
-        var systemPrompt =
+        var systemPrompt = 
             "You are a financial AI assistant inside FinancesManager. Help users understand transactions, cards, and spending.";
 
         var appContext =
@@ -73,7 +72,7 @@ public class HuggingFaceAIService : IAIService
         var client = _factory.CreateClient();
 
         client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", apiKey);
+            new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
 
         var body = new
         {
@@ -87,8 +86,7 @@ public class HuggingFaceAIService : IAIService
             }
         };
 
-        var response = await client.PostAsync(
-            "https://router.huggingface.co/v1/chat/completions",
+        var response = await client.PostAsync("https://router.huggingface.co/v1/chat/completions",
             new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
         );
 

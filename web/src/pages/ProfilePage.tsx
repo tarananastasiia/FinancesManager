@@ -6,17 +6,51 @@ import {
 import { getCardInfoApi, getHistoryApi } from "../api/paymentApi";
 import { getProfileApi } from "../api/userApi";
 import * as signalR from "@microsoft/signalr";
+import { getDashboardApi } from "../api/dashboardApi";
+import DashboardCard from "../components/DashboardCard";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import SavingsIcon from "@mui/icons-material/Savings";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import MovieIcon from "@mui/icons-material/Movie";
+import CategoryIcon from "@mui/icons-material/Category";
+import SpendingCharts from "../components/SpendingCharts";
 
 interface ProfileData { id: string; email: string; fullName: string; }
 interface CardInfo { brand: string; last4: string; expMonth: number; expYear: number; }
-interface Transaction { id: string; amount: number; status: string; date: string; card: string; }
+interface Transaction {
+  id: string;
+  amount: number;
+  status: string;
+  date: string;
+  card: string;
+  description: string,
+  category: string;
+}
 interface AIMessage { user: string; message: string; }
+interface DashboardData {
+  balance: number;
+  spentThisMonth: number;
+  transactions: number;
+  cards: number;
+  monthlySpending: {
+    month: string;
+    amount: number;
+  }[];
+  categorySpending: {
+    category: string;
+    amount: number;
+  }[];
+}
 
 const ProfilePage: React.FC = () => {
-
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [cards, setCards] = useState<CardInfo[]>([]);
   const [history, setHistory] = useState<Transaction[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([]);
@@ -26,18 +60,39 @@ const ProfilePage: React.FC = () => {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "Food":
+        return <RestaurantIcon />;
+
+      case "Transport":
+        return <DirectionsCarIcon />;
+
+      case "Shopping":
+        return <ShoppingCartIcon />;
+
+      case "Entertainment":
+        return <MovieIcon />;
+
+      default:
+        return <CategoryIcon />;
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [p, c, h] = await Promise.all([
+        const [p, c, h, d] = await Promise.all([
           getProfileApi(),
           getCardInfoApi(),
           getHistoryApi(),
+          getDashboardApi()
         ]);
 
         setProfile(p);
         setCards(c);
         setHistory(h);
+        setDashboard(d);
 
       } catch (err) {
         console.error("Unauthorized", err);
@@ -143,8 +198,49 @@ const ProfilePage: React.FC = () => {
           <strong>Email:</strong> {profile?.email}
         </Typography>
         <Divider sx={{ my: 2 }} />
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(4,1fr)"
+            },
+            gap: 2,
+            mb: 3
+          }}
+        >
+          <DashboardCard
+            title="Balance"
+            value={`$${dashboard?.balance ?? 0}`}
+            icon={<SavingsIcon />}
+          />
+          <DashboardCard
+            title="Spent this month"
+            value={`$${dashboard?.spentThisMonth ?? 0}`}
+            icon={<AccountBalanceWalletIcon />}
+          />
+          <DashboardCard
+            title="Transactions"
+            value={dashboard?.transactions ?? 0}
+            icon={<ReceiptLongIcon />}
+          />
+          <DashboardCard
+            title="Cards"
+            value={dashboard?.cards ?? 0}
+            icon={<CreditCardIcon />}
+          />
+        </Box>
+        {
+          dashboard && (
+            <SpendingCharts
+              monthlySpending={dashboard.monthlySpending}
+              categorySpending={dashboard.categorySpending}
+            />
+          )
+        }
+        <Divider sx={{ my: 2 }} />
         <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-          💳 Saved Cards
+          Saved Cards
         </Typography>
         {cards.length === 0 &&
           <Typography color="text.secondary">No cards saved</Typography>
@@ -161,7 +257,7 @@ const ProfilePage: React.FC = () => {
         </List>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-          📜 Recent Transactions
+          Recent Transactions
         </Typography>
         {history.length === 0 &&
           <Typography color="text.secondary">No transactions yet</Typography>
@@ -169,16 +265,33 @@ const ProfilePage: React.FC = () => {
         <List dense>
           {history.slice(0, 5).map((t) => (
             <ListItem key={t.id}>
-              <ListItemText
-                primary={`$${t.amount} — ${t.status}`}
-                secondary={`${new Date(t.date).toLocaleString()} | Card •••• ${t.card}`}
-              />
+              <ListItem
+                key={t.id}
+                secondaryAction={getCategoryIcon(t.category)}
+              >
+                <ListItemText
+                  primary={
+                    <>
+                      ${t.amount} — {t.status}
+                    </>
+                  }
+                  secondary={
+                    <>
+                      {t.category} • {t.description}
+                      <br />
+                      {new Date(t.date).toLocaleString()}
+                      {" | "}
+                      Card •••• {t.card}
+                    </>
+                  }
+                />
+              </ListItem>
             </ListItem>
           ))}
         </List>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h6" sx={{ color: "#4B3553", mb: 1 }}>
-          🤖 AI Chat
+          AI Chat
         </Typography>
         <Paper
           sx={{
@@ -191,7 +304,6 @@ const ProfilePage: React.FC = () => {
           }}
         >
           {aiMessages.map((m, i) => (
-
             <Box
               key={i}
               sx={{
@@ -230,15 +342,6 @@ const ProfilePage: React.FC = () => {
             Send
           </Button>
         </Box>
-        <Typography
-          sx={{
-            mt: 3,
-            color: "#7A6A86",
-            textAlign: "center"
-          }}
-        >
-          Secure Financial Platform
-        </Typography>
       </Paper>
     </Container>
   );

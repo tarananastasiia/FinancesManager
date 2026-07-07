@@ -1,5 +1,6 @@
 using Application.Behaviors;
 using Application.Interfaces;
+using Application.Models;
 using FinancesManager.Endpoints;
 using FluentValidation;
 using Infrastructure;
@@ -27,6 +28,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.Configure<HuggingFaceSettings>(
+    builder.Configuration.GetSection("HuggingFace"));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -96,12 +100,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<ChargeService>();
 builder.Services.AddScoped<IAIService, HuggingFaceAIService>();
 builder.Services.AddScoped<IApplicationDbContext, ApplicationDbContext>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<Infrastructure.Services.IStripeClient, Infrastructure.Services.StripeClient>();
+builder.Services.AddScoped<IStripeService, StripeService>();
 
 builder.Services.AddMediatR(cfg =>
 {
@@ -135,6 +140,7 @@ app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapPaymentEndpoints();
+app.MapDashboardEndpoints();
 
 app.MapHub<ChatHub>("/chatHub");
 

@@ -70,18 +70,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
             Member Login
           </Typography>
 
-          <Typography
-            align="center"
-            sx={{
-              color: "#7A6A86",
-              fontSize: "0.9rem",
-              mb: 4,
-              letterSpacing: "0.4px",
-            }}
-          >
-            Secure Financial Platform
-          </Typography>
-
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}

@@ -13,15 +13,18 @@ public class RegisterCommandHandler
     private readonly IApplicationDbContext _db;
     private readonly IJwtService _jwtService;
     private readonly IPasswordService _passwordService;
+    private readonly IStripeService _stripeService;
 
     public RegisterCommandHandler(
         IApplicationDbContext db,
         IJwtService jwtService,
-        IPasswordService passwordService)
+        IPasswordService passwordService,
+        IStripeService stripeService)
     {
         _db = db;
         _jwtService = jwtService;
         _passwordService = passwordService;
+        _stripeService = stripeService;
     }
 
     public async Task<RegisterResponse> Handle(
@@ -50,15 +53,9 @@ public class RegisterCommandHandler
 
         user.PasswordHash = _passwordService.Hash(user, model.Password);
 
-        var customerService = new CustomerService();
-
-        var stripeCustomer = await customerService.CreateAsync(new CustomerCreateOptions
-        {
-            Email = user.Email,
-            Name = user.FullName
-        }, cancellationToken: cancellationToken);
-
-        user.StripeCustomerId = stripeCustomer.Id;
+        user.StripeCustomerId = await _stripeService.CreateCustomerAsync(
+            user.Email,
+            user.FullName);
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync(cancellationToken);

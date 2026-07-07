@@ -2,7 +2,7 @@
 using Moq;
 using Stripe;
 using Assert = Microsoft.VisualStudio.TestTools.UnitTesting.Assert;
-using IStripeClient = Infrastructure.Services.IStripeClient;
+using IStripeService = Infrastructure.Services.IStripeService;
 
 namespace Tests.Payment
 {
@@ -12,7 +12,7 @@ namespace Tests.Payment
         [TestMethod]
         public async Task GetCards_Should_Return_Cards()
         {
-            var stripeMock = new Mock<IStripeClient>();
+            var stripeMock = new Mock<IStripeService>();
 
             stripeMock.Setup(x => x.GetCardMethods("cus_123"))
                 .ReturnsAsync(new List<PaymentMethod>
@@ -43,7 +43,7 @@ namespace Tests.Payment
         {
             var fixedDate = new DateTime(2023, 11, 14, 0, 0, 0, DateTimeKind.Utc);
 
-            var stripeMock = new Mock<IStripeClient>();
+            var stripeMock = new Mock<IStripeService>();
 
             stripeMock.Setup(x => x.GetPaymentHistory("cus_123", 20))
                 .ReturnsAsync(new List<PaymentIntent>
